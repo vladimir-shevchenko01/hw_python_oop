@@ -4,7 +4,7 @@
 и плавания.
 """
 from dataclasses import dataclass, asdict
-from typing import List, Dict
+from typing import Dict
 
 
 class Training:
@@ -34,25 +34,22 @@ class Training:
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения в км. в ч."""
-        dist = self.action * self.LEN_STEP / self.M_IN_KM
-        av_speed = dist / self.duration
-        return av_speed
+        return self.get_distance() / self.duration
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий вычисляется в
         соответствии с типом тренировки"""
-        raise NotImplementedError(f'Метод get_spent_calories не был '
-                                  f'переопределен в классе '
+        raise NotImplementedError('Метод get_spent_calories не был '
+                                  'переопределен в классе ',
                                   f'{self.__class__.__name__}')
 
-    def show_training_info(self) -> str:
+    def show_training_info(self) -> 'InfoMessage':
         """Вернуть информационное сообщение о выполненной тренировке."""
-        distance = self.get_distance()
-        speed = self.get_mean_speed()
-        calories = self.get_spent_calories()
         return InfoMessage(self.__class__.__name__,
-                           self.duration, distance,
-                           speed, calories)
+                           self.duration,
+                           self.get_distance(),
+                           self.get_mean_speed(),
+                           self.get_spent_calories())
 
 
 class Running(Training):
@@ -66,10 +63,9 @@ class Running(Training):
 
     def get_spent_calories(self) -> float:
         """Получить сожжённые калории."""
-        av_speed = Running.get_mean_speed(self)
         spent_calories = ((
                           self.CALORIES_MEAN_SPEED_MULTIPLIER
-                          * av_speed
+                          * self.get_mean_speed()
                           + self.CALORIES_MEAN_SPEED_SHIFT)
                           * self.weight
                           / self.M_IN_KM
@@ -92,16 +88,16 @@ class SportsWalking(Training):
     M_TO_SM: int = 100               # Константа метры в сантиметры.
 
     def __init__(self, action: int, duration: float,
-                 weight: float, height: int):
+                 weight: float, height: int) -> None:
         super().__init__(action, duration, weight)
         self.height = height
 
     def get_spent_calories(self) -> float:
         """Получить сожжённые калории."""
-        si_av_speed = self.get_mean_speed()
-        si_height = self.height / self.M_TO_SM
+        si_av_speed: float = self.get_mean_speed() * self.COEF_KMH_MS
+        si_height: float = self.height / self.M_TO_SM
         spent_calories = ((self.WEIGHT_COEF1 * self.weight
-                           + ((si_av_speed * self.COEF_KMH_MS) ** 2
+                           + (si_av_speed ** 2
                                / si_height) * self.WEIGHT_COEF2 * self.weight)
                           * self.duration * self.MIN_IN_HOUR)
         return spent_calories
@@ -118,18 +114,10 @@ class Swimming(Training):
     SWIM_CONST2: int = 2          # Множитель скорости при плавании.
 
     def __init__(self, action: int, duration: float,
-                 weight: float, length_pool: int, count_pool: int):
+                 weight: float, length_pool: int, count_pool: int) -> None:
         super().__init__(action, duration, weight)
         self.length_pool = length_pool
         self.count_pool = count_pool
-
-    def get_distance(self) -> float:
-        """
-        Получить дистанцию в км. В классе меняется значение
-        константы длинны одного гребка.
-        """
-        dist = self.action * self.LEN_STEP / self.M_IN_KM
-        return dist
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость"""
@@ -141,8 +129,7 @@ class Swimming(Training):
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченых калорий"""
-        swim_av_speed = self.get_mean_speed()
-        swim_cal = ((swim_av_speed + self.SWIM_CONST1)
+        swim_cal = ((self.get_mean_speed() + self.SWIM_CONST1)
                     * self.SWIM_CONST2
                     * self.weight
                     * self.duration)
@@ -157,24 +144,23 @@ class InfoMessage:
     distance: float      # Пройденная дистанция в км..
     speed: float         # Средняя скорость км. в час.
     calories: float      # Количество сожженных калорий за тренировку
-    MESSAGE = ('Тип тренировки: {training_type}; '
-               'Длительность: {duration:.3f} ч.; '
-               'Дистанция: {distance:.3f} км; '
-               'Ср. скорость: {speed:.3f} км/ч; '
-               'Потрачено ккал: {calories:.3f}.')
+    MESSAGE: str = ('Тип тренировки: {training_type}; '
+                    'Длительность: {duration:.3f} ч.; '
+                    'Дистанция: {distance:.3f} км; '
+                    'Ср. скорость: {speed:.3f} км/ч; '
+                    'Потрачено ккал: {calories:.3f}.')
 
     def get_message(self) -> str:
         """Вывод сообщения о пройденой тренировке"""
-        my_dict = asdict(self)
-        return self.MESSAGE.format(**my_dict)
+        return self.MESSAGE.format(**asdict(self))
 
 
-def read_package(workout_type: str, data: List[int]) -> Training:
+def read_package(workout_type: str, data: list[float]) -> Training:
     """Прочитать данные полученные от датчиков."""
     """Словарь сопоставляющий коды тренировок с классами для их вызова."""
-    workout_dict: Dict[str | type] = {'SWM': Swimming,
-                                      'RUN': Running,
-                                      'WLK': SportsWalking}
+    workout_dict: Dict[str, type(Training)] = {'SWM': Swimming,
+                                               'RUN': Running,
+                                               'WLK': SportsWalking}
     """Инвертируем проверку вхождения ключа в словарь"""
     if workout_type not in workout_dict:
         raise ValueError(f'Неизвестный тип тренировки: {workout_type}')
