@@ -4,12 +4,13 @@
 и плавания.
 """
 from dataclasses import dataclass, asdict
-from typing import Dict, Type
+from typing import Dict
 
 
 @dataclass
 class InfoMessage:
     """Информационное сообщение о тренировке. Содержит метод"""
+    
     training_type: str   # Тип тренировки
     duration: float      # Продолжительность тренировка в часах.
     distance: float      # Пройденная дистанция в км..
@@ -33,6 +34,7 @@ class Training:
     модуль возвращает информационное сообщение о результатах
     пройденной тренировки.
     """
+    
     LEN_STEP: float = 0.65         # Коэфицент расчета длины шага.
     M_IN_KM: int = 1000            # М. в км..
     MIN_IN_HOUR: int = 60          # М. в часе.
@@ -76,6 +78,7 @@ class Running(Training):
     длину пройденной дистанции, среднюю скорость, вычисляет количество
     сожженных каллорий.
     """
+    
     CALORIES_MEAN_SPEED_MULTIPLIER: int = 18      # Множитель средней скорости.
     CALORIES_MEAN_SPEED_SHIFT: float = 1.79       # Коэфицент расхода калорий.
 
@@ -127,6 +130,7 @@ class Swimming(Training):
     длину пройденной дистанции, среднюю скорость, вычисляет количество
     сожженных каллорий.
     """
+    
     LEN_STEP: float = 1.38        # Коэфицент расчета длины гребка пловца.
     SWIM_CONST1: float = 1.1      # Добавочный коэфицент скорости при плавании.
     SWIM_CONST2: int = 2          # Множитель скорости при плавании.
@@ -157,7 +161,7 @@ class Swimming(Training):
 def read_package(workout_type: str, data: list[float]) -> Training:
     """Прочитать данные полученные от датчиков."""
     """Словарь сопоставляющий коды тренировок с классами для их вызова."""
-    workout_dict: Dict[str, Type[Training]] = {'SWM': Swimming,
+    workout_dict: Dict[str, type[Training]] = {'SWM': Swimming,
                                                'RUN': Running,
                                                'WLK': SportsWalking}
     """Инвертируем проверку вхождения ключа в словарь"""
