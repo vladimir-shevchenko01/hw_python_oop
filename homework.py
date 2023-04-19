@@ -4,7 +4,26 @@
 и плавания.
 """
 from dataclasses import dataclass, asdict
-from typing import Dict
+from typing import Dict, Type
+
+
+@dataclass
+class InfoMessage:
+    """Информационное сообщение о тренировке. Содержит метод"""
+    training_type: str   # Тип тренировки
+    duration: float      # Продолжительность тренировка в часах.
+    distance: float      # Пройденная дистанция в км..
+    speed: float         # Средняя скорость км. в час.
+    calories: float      # Количество сожженных калорий за тренировку
+    MESSAGE: str = ('Тип тренировки: {training_type}; '
+                    'Длительность: {duration:.3f} ч.; '
+                    'Дистанция: {distance:.3f} км; '
+                    'Ср. скорость: {speed:.3f} км/ч; '
+                    'Потрачено ккал: {calories:.3f}.')
+
+    def get_message(self) -> str:
+        """Вывод сообщения о пройденой тренировке"""
+        return self.MESSAGE.format(**asdict(self))
 
 
 class Training:
@@ -29,8 +48,7 @@ class Training:
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
-        dist = self.action * self.LEN_STEP / self.M_IN_KM
-        return dist
+        return self.action * self.LEN_STEP / self.M_IN_KM
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения в км. в ч."""
@@ -43,7 +61,7 @@ class Training:
                                   'переопределен в классе ',
                                   f'{self.__class__.__name__}')
 
-    def show_training_info(self) -> 'InfoMessage':
+    def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
         return InfoMessage(self.__class__.__name__,
                            self.duration,
@@ -136,29 +154,10 @@ class Swimming(Training):
         return swim_cal
 
 
-@dataclass
-class InfoMessage:
-    """Информационное сообщение о тренировке. Содержит метод"""
-    training_type: str   # Тип тренировки
-    duration: float      # Продолжительность тренировка в часах.
-    distance: float      # Пройденная дистанция в км..
-    speed: float         # Средняя скорость км. в час.
-    calories: float      # Количество сожженных калорий за тренировку
-    MESSAGE: str = ('Тип тренировки: {training_type}; '
-                    'Длительность: {duration:.3f} ч.; '
-                    'Дистанция: {distance:.3f} км; '
-                    'Ср. скорость: {speed:.3f} км/ч; '
-                    'Потрачено ккал: {calories:.3f}.')
-
-    def get_message(self) -> str:
-        """Вывод сообщения о пройденой тренировке"""
-        return self.MESSAGE.format(**asdict(self))
-
-
 def read_package(workout_type: str, data: list[float]) -> Training:
     """Прочитать данные полученные от датчиков."""
     """Словарь сопоставляющий коды тренировок с классами для их вызова."""
-    workout_dict: Dict[str, type(Training)] = {'SWM': Swimming,
+    workout_dict: Dict[str, Type[Training]] = {'SWM': Swimming,
                                                'RUN': Running,
                                                'WLK': SportsWalking}
     """Инвертируем проверку вхождения ключа в словарь"""
